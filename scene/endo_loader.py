@@ -246,24 +246,37 @@ class EndoNeRF_Dataset(object):
 
 
 class C3VD_Dataset(object):
+    # The C3VD reference intrinsics below were calibrated for this resolution.
+    REF_WIDTH = 675
+    REF_HEIGHT = 540
+    REF_FX = 401.1595
+    REF_FY = 400.9425
+    REF_CX = 334.143
+    REF_CY = 273.8665
+
     def __init__(
         self,
         datadir,
         downsample=1.0,
         test_every=8,
-        mode='monocular'
+        mode='monocular',
+        width=None,
+        height=None
     ):
         
-        self.image_height = 540 
-        self.image_width = 675 
+        self.image_width = int(width) if width and width > 0 else self.REF_WIDTH
+        self.image_height = int(height) if height and height > 0 else self.REF_HEIGHT
         self.img_wh = (
             int(self.image_width / downsample),
             int(self.image_height / downsample),
         )
-        self.fx = 401.1595
-        self.fy = 400.9425
-        self.cx = 334.143
-        self.cy = 273.8665
+        # Scale intrinsics from the reference resolution to the requested one.
+        scale_x = self.image_width / self.REF_WIDTH
+        scale_y = self.image_height / self.REF_HEIGHT
+        self.fx = self.REF_FX * scale_x
+        self.fy = self.REF_FY * scale_y
+        self.cx = self.REF_CX * scale_x
+        self.cy = self.REF_CY * scale_y
         self.png_depth_scale = 2.55
         self.root_dir = datadir
         self.downsample = downsample 
@@ -340,6 +353,21 @@ class C3VD_Dataset(object):
             pose = torch.Tensor(pose).reshape(4, 4).float().transpose(0, 1)
             poses.append(pose)
         return poses
+
+    def _resize_image(self, image):
+        """Resize an HxWxC image array to the configured resolution."""
+        if image.shape[0] != self.image_height or image.shape[1] != self.image_width:
+            image = cv2.resize(image, (self.image_width, self.image_height),
+                               interpolation=cv2.INTER_AREA)
+        return image
+
+    def _resize_depth(self, depth):
+        """Resize an HxW (or 1xHxW) depth array to the configured resolution."""
+        depth = np.asarray(depth).squeeze().astype(np.float32)
+        if depth.shape[0] != self.image_height or depth.shape[1] != self.image_width:
+            depth = cv2.resize(depth, (self.image_width, self.image_height),
+                               interpolation=cv2.INTER_LINEAR)
+        return depth
         
     def format_infos(self, split):
         cameras = []
@@ -355,9 +383,11 @@ class C3VD_Dataset(object):
                 depth = cv2.imread(depth_path, -1)/self.png_depth_scale
             except:
                 depth = np.load(depth_path)
+            depth = self._resize_depth(depth)
             depth = torch.from_numpy(depth).float()
             # color
             color = np.array(Image.open(self.image_paths[idx]))/255.0
+            color = self._resize_image(color)
     
             image = self.transform(color).float()
             # times
@@ -420,8 +450,10 @@ class C3VD_Dataset(object):
             depth = cv2.imread(self.depth_paths[idx], -1)/self.png_depth_scale
         except:
             depth = np.load(self.depth_paths[idx])
+        depth = self._resize_depth(depth)
         
         color = np.array(Image.open(self.image_paths[idx]))/255.0
+        color = self._resize_image(color)
         mask = np.ones_like(depth)
         return color, depth, mask
              

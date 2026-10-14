@@ -278,13 +278,15 @@ def readScaredInfo(datadir, mode, init_pts):
 
     return scene_info
 
-def readC3VDInfo(datadir, mode='monocular'):
+def readC3VDInfo(datadir, mode='monocular', data_width=675, data_height=540):
     # load camera infos
     from scene.endo_loader import C3VD_Dataset
     endo_dataset = C3VD_Dataset(
         datadir=datadir,
         downsample=1.0,
-        mode=mode
+        mode=mode,
+        width=data_width,
+        height=data_height
     )
     train_cam_infos = endo_dataset.format_infos(split="train")
     test_cam_infos = endo_dataset.format_infos(split="test")

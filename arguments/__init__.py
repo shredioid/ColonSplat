@@ -58,6 +58,8 @@ class ModelParams(ParamGroup):
         self.extra_mark = None
         self.camera_extent = None
         self.mode = 'monocular'
+        self.data_width = 675
+        self.data_height = 540
         self.no_fine = False
         self.init_pts = 200_000
         super().__init__(parser, "Loading Parameters", sentinel)
