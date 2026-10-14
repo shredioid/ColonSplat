@@ -19,3 +19,4 @@ data/
 pretrained_gaussians/
 *.ply
 submodules/diff-gaussian-rasterization-rades/*
+submodules/simple-knn
