@@ -20,3 +20,4 @@ pretrained_gaussians/
 *.ply
 submodules/diff-gaussian-rasterization-rades/*
 submodules/simple-knn
+data_custom/seq_3/transforms.json
