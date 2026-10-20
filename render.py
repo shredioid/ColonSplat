@@ -86,6 +86,10 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
                     mask = view.mask
                     mask_list.append(mask)
                     gt_depth = view.depth / view.depth.max()
+                    # C3VD depth may be (H, W); add the channel dim so that
+                    # torch.stack(...,0).permute(0,2,3,1) below stays valid.
+                    if gt_depth.ndim == 2:
+                        gt_depth = gt_depth.unsqueeze(0)
                     gt_depths.append(gt_depth)
 
     time2=time()

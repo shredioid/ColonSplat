@@ -71,6 +71,9 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         render_images.append(rendering["render"].cpu())
         render_depths.append((rendering["depth"]/ rendering["depth"].max()).cpu())
         gt_depth = test_cam.depth / test_cam.depth.max()
+        # keep gt_depth as (1, H, W) so it matches rendering["depth"] in mse()
+        if gt_depth.ndim == 2:
+            gt_depth = gt_depth.unsqueeze(0)
         gt_depths.append(gt_depth)
         gt_img = test_cam.original_image[0:3, :, :]
         gt_images.append(gt_img)
