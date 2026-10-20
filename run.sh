@@ -12,32 +12,45 @@ KNN_W=(
 ITERS=30000
 COL_SMOOTH_W=0.0001
 
+# Dataset list: explicit paths (relative to repo root, or absolute).
+# Each entry must be a sequence folder containing e.g. transforms.json / images.
 DATASETS=(
-    c1_ascending_t4_v4
-    c1_cecum_t1_v4
-    c1_descending_t4_v4
-    c1_sigmoid1_t4_v4
-    c1_sigmoid2_t4_v4
-    c1_transverse1_t1_v4
-    c1_transverse1_t4_v4
-    c2_cecum_t1_v4
-    c2_transverse1_t1_v4
+    # "/mnt/a-1/C3VDv2/c1_sigmoid1_t4_v4"
+    "/mnt/a-1/C3VDv2/c1_transverse1_t1_v4"
+    "/mnt/a-1/C3VDv2/c1_transverse1_t4_v4"
+    # "/root/ColonSplat/data_custom/seq_3"
 )
+
+# Optional: override the dataset list from the command line, e.g.
+#   ./run.sh /abs/path/to/seq_a /abs/path/to/seq_b
+if [ "$#" -gt 0 ]; then
+    DATASETS=("$@")
+fi
 
 for knn_weight in "${KNN_W[@]}" 
 do
-    for DATA in "${DATASETS[@]}" 
+    for DATA_PATH in "${DATASETS[@]}" 
     do
-        echo "===== Running $DATA ====="
+        # strip trailing slash so basename is not empty
+        DATA_PATH="${DATA_PATH%/}"
 
-        data_path="data/coloncrafter/${DATA}"
-        exp_name="test/${DATA}_knn${knn_weight}_depth${DEPTH_W}_dcol${DCOL_W}"
+        if [ ! -d "$DATA_PATH" ]; then
+            echo "===== SKIP (dataset path not found): $DATA_PATH ====="
+            continue
+        fi
+
+        DATA_NAME=$(basename "$DATA_PATH")
+        echo "===== Running $DATA_NAME ($DATA_PATH) ====="
+
+        data_path="$DATA_PATH"
+        exp_name="test/${DATA_NAME}_knn${knn_weight}_depth${DEPTH_W}_dcol${DCOL_W}"
+        model_path="output/${exp_name}"
 
         # ---- TRAIN ----
         python train.py \
-            -s $data_path \
+            -s "$data_path" \
             --port 6019 \
-            --expname $exp_name \
+            --expname "$exp_name" \
             --depth_weight $DEPTH_W \
             --knn_weight $knn_weight \
             --dcol_weight $DCOL_W \
@@ -50,23 +63,23 @@ do
 
         # ---- RENDER ----
         python render.py \
-            -s $data_path \
-            --model_path output/$exp_name \
+            -s "$data_path" \
+            --model_path "$model_path" \
             --skip_video --skip_train --eval
 
         # ---- METRICS FOR EVERY N-TH TEST FRAME ----
-        python metrics.py --model_path output/$exp_name
+        python metrics.py --model_path "$model_path"
 
         # ---- VISUALIZE LOOKAT CAMERAS ----
         python render_lookat_cameras.py \
-            -s $data_path \
-            --model_path output/$exp_name \
+            -s "$data_path" \
+            --model_path "$model_path" \
             --skip_video --skip_train --eval
 
         # ---- CAMERA-TIMESTEP SHIFT ----
         python render_time_shift.py \
-            -s $data_path \
-            --model_path output/$exp_name \
+            -s "$data_path" \
+            --model_path "$model_path" \
             --skip_video --skip_train --eval
     done
 done
