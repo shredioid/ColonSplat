@@ -328,6 +328,7 @@ def readColonSplatInfo(datadir, load_plys=False):
     )
     train_cam_infos = endo_dataset.format_infos(split=endo_dataset.train_idxs)
     test_cam_infos = endo_dataset.format_infos(split=endo_dataset.test_idxs)
+    video_cam_infos = endo_dataset.format_infos(split=endo_dataset.video_idxs)
     
     
     # get normalizations
@@ -349,7 +350,7 @@ def readColonSplatInfo(datadir, load_plys=False):
         scene_info = SceneInfo(point_cloud=pcd,
                             train_cameras=train_cam_infos,
                             test_cameras=test_cam_infos,
-                            video_cameras=None,
+                            video_cameras=video_cam_infos,
                             nerf_normalization=nerf_normalization,
                             ply_path=ply_path,
                             maxtime=maxtime,
@@ -360,7 +361,7 @@ def readColonSplatInfo(datadir, load_plys=False):
         scene_info = SceneInfo(point_cloud=pcd,
                             train_cameras=train_cam_infos,
                             test_cameras=test_cam_infos,
-                            video_cameras=None,
+                            video_cameras=video_cam_infos,
                             nerf_normalization=nerf_normalization,
                             ply_path=ply_path,
                             maxtime=maxtime

@@ -29,6 +29,10 @@ to8b = lambda x : (255*np.clip(x.cpu().numpy(),0,1)).astype(np.uint8)
 
 def render_set(model_path, name, iteration, views, gaussians, pipeline, background):
 
+    if views is None or len(views) == 0:
+        print(f"[WARNING] No cameras found for split '{name}', skipping rendering.")
+        return
+
     videos_path = os.path.join(model_path, name, "ours_{}".format(iteration))
 
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
